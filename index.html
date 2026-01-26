@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>VS Schematic Shopping List</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #1a1a1a; font-family: 'Segoe UI', sans-serif; }
+        #ui { position: absolute; top: 20px; left: 20px; z-index: 10; color: white; background: rgba(0,0,0,0.9); padding: 20px; border-radius: 12px; width: 320px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); display: flex; flex-direction: column; max-height: 90vh; }
+        #legend { margin-top: 15px; overflow-y: auto; border-top: 1px solid #444; padding-top: 10px; flex-grow: 1; }
+        .legend-item { display: flex; align-items: center; margin-bottom: 6px; font-size: 13px; cursor: pointer; padding: 8px; border-radius: 6px; transition: all 0.2s; background: rgba(255,255,255,0.03); }
+        .legend-item:hover { background: rgba(255,255,255,0.1); }
+        .legend-item.hidden-block { opacity: 0.2; filter: grayscale(1); }
+        .color-box { width: 14px; height: 14px; border-radius: 3px; margin-right: 12px; flex-shrink: 0; }
+        .block-info { display: flex; justify-content: space-between; width: 100%; align-items: center; }
+        .block-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; color: #ddd; }
+        .block-count { font-family: monospace; background: #444; padding: 2px 6px; border-radius: 4px; font-size: 11px; color: #fff; }
+        .button-group { display: flex; gap: 8px; margin: 12px 0; }
+        button { flex: 1; background: #2a2a2a; color: #eee; border: 1px solid #555; padding: 8px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        button:hover { background: #3a3a3a; border-color: #888; }
+        input[type="file"] { font-size: 12px; margin-bottom: 5px; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #555; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+<div id="ui">
+    <strong style="font-size: 1.2em; margin-bottom: 5px;">Schematic Analyzer</strong>
+    <span style="font-size: 11px; color: #888; margin-bottom: 10px;">Sort: Highest Count First</span>
+    <input type="file" id="fileInput" accept=".json,.hjson">
+    
+    <div class="button-group">
+        <button onclick="toggleAll(true)">Show All</button>
+        <button onclick="toggleAll(false)">Hide All</button>
+    </div>
+    
+    <div id="legend"></div>
+</div>
+
+<script type="module">
+    import * as THREE from 'https://cdn.skypack.dev/three@0.136.0';
+    import { OrbitControls } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls.js';
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+    const light = new THREE.PointLight(0xffffff, 0.5);
+    camera.add(light);
+    scene.add(camera);
+    
+    let blockGroup = new THREE.Group();
+    scene.add(blockGroup);
+    let blockMetadata = new Map();
+
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            try {
+                const data = JSON.parse(ev.target.result);
+                render(data);
+            } catch(e) { alert("Error reading file. Ensure it is valid JSON."); }
+        };
+        reader.readAsText(file);
+    });
+
+    function render(data) {
+        blockGroup.clear();
+        blockMetadata.clear();
+        const geometry = new THREE.BoxGeometry(0.92, 0.92, 0.92);
+
+        // First pass: Count and define metadata
+        data.BlockIds.forEach((id) => {
+            const code = data.BlockCodes[id] || "unknown";
+            if (!blockMetadata.has(code)) {
+                blockMetadata.set(code, { 
+                    color: stringToColor(code), 
+                    visible: true, 
+                    count: 0 
+                });
+            }
+            blockMetadata.get(code).count++;
+        });
+
+        // Second pass: Create 3D blocks
+        data.Indices.forEach((packedIndex, i) => {
+            const x = packedIndex & 0x3FF;
+            const z = (packedIndex >> 10) & 0x3FF;
+            const y = (packedIndex >> 20) & 0x3FF;
+            const code = data.BlockCodes[data.BlockIds[i]];
+
+            const material = new THREE.MeshLambertMaterial({ color: blockMetadata.get(code).color });
+            const cube = new THREE.Mesh(geometry, material);
+            cube.position.set(x - data.SizeX/2, y, z - data.SizeZ/2);
+            cube.userData.blockCode = code;
+            blockGroup.add(cube);
+        });
+
+        updateLegendUI();
+        camera.position.set(data.SizeX * 1.2, data.SizeY + 5, data.SizeZ * 1.2);
+        controls.target.set(0, data.SizeY / 2, 0);
+        controls.update();
+    }
+
+    window.toggleBlock = function(code) {
+        const state = blockMetadata.get(code);
+        state.visible = !state.visible;
+        blockGroup.children.forEach(mesh => {
+            if (mesh.userData.blockCode === code) mesh.visible = state.visible;
+        });
+        updateLegendUI();
+    };
+
+    window.toggleAll = function(visible) {
+        blockMetadata.forEach((val) => val.visible = visible);
+        blockGroup.children.forEach(mesh => mesh.visible = visible);
+        updateLegendUI();
+    };
+
+    function updateLegendUI() {
+        const container = document.getElementById('legend');
+        container.innerHTML = '';
+        
+        // SORTING LOGIC: Sort entries by their count descending
+        const sortedEntries = [...blockMetadata.entries()].sort((a, b) => b[1].count - a[1].count);
+
+        sortedEntries.forEach(([code, data]) => {
+            const item = document.createElement('div');
+            item.className = `legend-item ${data.visible ? '' : 'hidden-block'}`;
+            item.onclick = () => toggleBlock(code);
+            
+            const cleanName = code.replace('game:', '').replace(/-/g, ' ');
+            item.innerHTML = `
+                <div class="color-box" style="background: ${data.color}"></div>
+                <div class="block-info">
+                    <div class="block-name" title="${code}">${cleanName}</div>
+                    <div class="block-count">x${data.count}</div>
+                </div>
+            `;
+            container.appendChild(item);
+        });
+    }
+
+    function stringToColor(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+        return `hsl(${Math.abs(hash) % 360}, 60%, 55%)`;
+    }
+
+    function animate() { requestAnimationFrame(animate); renderer.render(scene, camera); }
+    animate();
+</script>
+</body>
+</html>
