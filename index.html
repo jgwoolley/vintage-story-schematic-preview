@@ -194,7 +194,7 @@
         let raycaster = new THREE.Raycaster();
         let mouse = new THREE.Vector2();
 
-        let currentSchematicData = null;
+        let currentSchematicData = {"GameVersion":"1.21.6","SizeX":9,"SizeY":9,"SizeZ":1,"BlockCodes":{"3286":"game:metalblock-new-plain-gold","3267":"game:metalblock-new-plain-blackbronze"},"ItemCodes":{},"Indices":[3145728,4194304,5242880,1048577,2097153,3145729,4194305,5242881,6291457,7340033,1048578,2097154,3145730,4194306,5242882,6291458,7340034,3,1048579,2097155,3145731,4194307,5242883,6291459,7340035,8388611,4,1048580,2097156,3145732,4194308,5242884,6291460,7340036,8388612,5,1048581,2097157,3145733,4194309,5242885,6291461,7340037,8388613,1048582,2097158,3145734,4194310,5242886,6291462,7340038,1048583,2097159,3145735,4194311,5242887,6291463,7340039,3145736,4194312,5242888],"BlockIds":[3286,3286,3286,3286,3286,3286,3286,3286,3286,3286,3286,3267,3286,3286,3267,3286,3286,3286,3267,3286,3286,3286,3286,3286,3286,3286,3286,3267,3286,3286,3286,3286,3286,3286,3286,3286,3267,3286,3286,3286,3286,3286,3286,3286,3286,3267,3286,3286,3267,3286,3286,3286,3286,3286,3286,3286,3286,3286,3286,3286,3286],"DecorIndices":[],"DecorIds":[],"BlockEntities":{},"Entities":[],"ReplaceMode":2,"EntranceRotation":-1,"OriginalPos":{"X":513890,"Z":517371,"InternalY":126}};
         let selectedBlock = null; // Track the currently glowing block
         let originalColor = new THREE.Color();
 
@@ -205,7 +205,6 @@
             reader.onload = (ev) => {
                 try {
                     const data = JSON.parse(ev.target.result);
-                    currentSchematicData = data;
                     render(data);
                 } catch (e) { alert("Error reading file. Standard JSON required."); }
             };
@@ -272,6 +271,7 @@
         function render(data) {
             blockGroup.clear();
             blockMetadata.clear();
+            currentSchematicData = data;
             const geometry = new THREE.BoxGeometry(0.92, 0.92, 0.92);
 
             data.BlockIds.forEach((id) => {
@@ -303,6 +303,8 @@
             controls.target.set(0, data.SizeY / 2, 0);
             controls.update();
         }
+
+        render(currentSchematicData)
 
         window.toggleBlock = function (code) {
             const state = blockMetadata.get(code);
