@@ -1,163 +1,75 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-    <title>VS Schematic Inspector</title>
+    <title>VS Schematic Inspector Pro</title>
     <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            background: #1a1a1a;
-            font-family: 'Segoe UI', sans-serif;
-        }
+        body { margin: 0; overflow: hidden; background: #1a1a1a; font-family: 'Segoe UI', sans-serif; }
+        
+        /* Main UI Panel */
+        #ui { position: absolute; top: 20px; left: 20px; z-index: 10; color: white; background: rgba(0, 0, 0, 0.95); padding: 20px; border-radius: 12px; width: 320px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5); display: flex; flex-direction: column; max-height: 90vh; border: 1px solid #444; }
+        
+        /* Help & Inspector Panels */
+        #inspector, #helpPanel { position: absolute; top: 20px; right: 20px; z-index: 11; color: white; background: rgba(0, 0, 0, 0.95); padding: 20px; border-radius: 12px; width: 280px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5); display: none; border-left: 4px solid #0078d4; }
+        
+        .control-block { margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #333; }
+        
+        /* Search Bar with X Button */
+        .search-container { position: relative; display: flex; align-items: center; }
+        input[type="text"] { width: 100%; background: #222; border: 1px solid #444; color: white; padding: 10px 35px 10px 10px; border-radius: 6px; outline: none; font-size: 13px; }
+        input[type="text"]:focus { border-color: #0078d4; }
+        .clear-search { position: absolute; right: 10px; cursor: pointer; color: #888; font-weight: bold; font-size: 16px; user-select: none; }
+        .clear-search:hover { color: white; }
 
-        #ui {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            z-index: 10;
-            color: white;
-            background: rgba(0, 0, 0, 0.9);
-            padding: 20px;
-            border-radius: 12px;
-            width: 300px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-            display: flex;
-            flex-direction: column;
-            max-height: 90vh;
-        }
+        /* Sliders and Buttons */
+        input[type="range"] { width: 100%; margin-top: 10px; accent-color: #0078d4; }
+        .button-group { display: flex; gap: 8px; margin: 12px 0; }
+        button { flex: 1; background: #333; color: #eee; border: 1px solid #444; padding: 8px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        button:hover { background: #444; border-color: #666; }
+        button.help-btn { background: #0078d4; border: none; margin-bottom: 10px; }
+        
+        /* Legend List */
+        #legend { overflow-y: auto; flex-grow: 1; margin-top: 10px; }
+        .legend-item { display: flex; align-items: center; margin-bottom: 6px; font-size: 13px; cursor: pointer; padding: 8px; border-radius: 6px; background: rgba(255, 255, 255, 0.03); border: 1px solid transparent; }
+        .legend-item:hover { background: rgba(255, 255, 255, 0.08); border-color: #555; }
+        .legend-item.hidden-block { opacity: 0.2; filter: grayscale(1); }
+        .color-box { width: 14px; height: 14px; border-radius: 3px; margin-right: 12px; flex-shrink: 0; }
+        .block-info { display: flex; justify-content: space-between; width: 100%; align-items: center; }
+        .block-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 170px; color: #ccc; }
+        .block-count { font-family: monospace; background: #222; padding: 2px 6px; border-radius: 4px; font-size: 11px; color: #aaa; }
 
-        /* New Inspector Panel */
-        #inspector {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            z-index: 10;
-            color: white;
-            background: rgba(0, 0, 0, 0.9);
-            padding: 20px;
-            border-radius: 12px;
-            width: 250px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-            display: none;
-            border-left: 4px solid #0078d4;
-        }
-
-        #legend {
-            margin-top: 15px;
-            overflow-y: auto;
-            border-top: 1px solid #444;
-            padding-top: 10px;
-            flex-grow: 1;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 6px;
-            font-size: 13px;
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 6px;
-            transition: all 0.2s;
-            background: rgba(255, 255, 255, 0.03);
-        }
-
-        .legend-item:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .legend-item.hidden-block {
-            opacity: 0.2;
-            filter: grayscale(1);
-        }
-
-        .color-box {
-            width: 14px;
-            height: 14px;
-            border-radius: 3px;
-            margin-right: 12px;
-            flex-shrink: 0;
-        }
-
-        .block-info {
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-            align-items: center;
-        }
-
-        .block-name {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 160px;
-            color: #ddd;
-        }
-
-        .block-count {
-            font-family: monospace;
-            background: #444;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 11px;
-            color: #fff;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 8px;
-            margin: 12px 0;
-        }
-
-        button {
-            flex: 1;
-            background: #2a2a2a;
-            color: #eee;
-            border: 1px solid #555;
-            padding: 8px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: bold;
-        }
-
-        button:hover {
-            background: #3a3a3a;
-            border-color: #888;
-        }
-
-        input[type="file"] {
-            font-size: 12px;
-            margin-bottom: 5px;
-        }
-
-        .trait {
-            margin-top: 10px;
-            font-size: 12px;
-            color: #aaa;
-        }
-
-        .trait b {
-            color: #fff;
-        }
-
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #555;
-            border-radius: 10px;
-        }
+        /* Typography */
+        h3 { margin: 0 0 10px 0; font-size: 16px; color: #0078d4; }
+        p, li { font-size: 12px; color: #bbb; line-height: 1.5; margin-bottom: 8px; }
+        .trait { margin-top: 10px; font-size: 12px; color: #aaa; }
+        .trait b { color: #fff; }
+        
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
     </style>
 </head>
 
 <body>
-
     <div id="ui">
-        <strong style="font-size: 1.2em; margin-bottom: 5px;">Schematic Analyzer</strong>
-        <input type="file" id="fileInput" accept=".json,.hjson">
+        <button class="help-btn" onclick="toggleHelp()">Guide</button>
+        <strong style="font-size: 1.2em; margin-bottom: 10px;">Schematic Inspector</strong>
+        
+        <input type="file" id="fileInput" accept=".json,.hjson" style="font-size: 11px; margin-bottom: 15px;">
+        
+        <div class="control-block">
+            <div style="display:flex; justify-content: space-between; font-size: 12px;">
+                <span>Layer (Y-Axis):</span>
+                <span id="layerLabel" style="color: #0078d4; font-weight: bold;">All Floors</span>
+            </div>
+            <input type="range" id="layerSlider" min="-1" max="0" value="-1">
+        </div>
+
+        <div class="control-block">
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="Find block in list...">
+                <span class="clear-search" id="clearSearch">×</span>
+            </div>
+        </div>
+
         <div class="button-group">
             <button onclick="toggleAll(true)">Show All</button>
             <button onclick="toggleAll(false)">Hide All</button>
@@ -165,11 +77,24 @@
         <div id="legend"></div>
     </div>
 
+    <div id="helpPanel">
+        <h3>Instructions</h3>
+        <ul style="padding-left: 15px;">
+            <li><b>Rotate:</b> Left Click + Drag</li>
+            <li><b>Pan:</b> Right Click + Drag</li>
+            <li><b>Zoom:</b> Mouse Wheel</li>
+            <li><b>Inspect:</b> Click any block to see its specific traits.</li>
+            <li><b>Filter:</b> Click blocks in the list to toggle visibility.</li>
+            <li><b>Layers:</b> Use the slider to view the build floor-by-floor.</li>
+            <li><b>Search:</b> Filters the list to find specific materials.</li>
+        </ul>
+        <button style="width: 100%;" onclick="toggleHelp()">Close Guide</button>
+    </div>
+
     <div id="inspector">
-        <strong style="color: #0078d4;">Block Traits</strong>
+        <h3>Block Traits</h3>
         <div id="traitContent"></div>
-        <button style="margin-top: 15px;"
-            onclick="document.getElementById('inspector').style.display='none'">Close</button>
+        <button style="width: 100%; margin-top: 15px;" onclick="closeInspector()">Close</button>
     </div>
 
     <script type="module">
@@ -193,85 +118,95 @@
         let blockMetadata = new Map();
         let raycaster = new THREE.Raycaster();
         let mouse = new THREE.Vector2();
+        let selectedBlock = null;
+        let currentLayer = -1;
+        let searchQuery = "";
 
-        let currentSchematicData = {"GameVersion":"1.21.6","SizeX":9,"SizeY":9,"SizeZ":1,"BlockCodes":{"3286":"game:metalblock-new-plain-gold","3267":"game:metalblock-new-plain-blackbronze"},"ItemCodes":{},"Indices":[3145728,4194304,5242880,1048577,2097153,3145729,4194305,5242881,6291457,7340033,1048578,2097154,3145730,4194306,5242882,6291458,7340034,3,1048579,2097155,3145731,4194307,5242883,6291459,7340035,8388611,4,1048580,2097156,3145732,4194308,5242884,6291460,7340036,8388612,5,1048581,2097157,3145733,4194309,5242885,6291461,7340037,8388613,1048582,2097158,3145734,4194310,5242886,6291462,7340038,1048583,2097159,3145735,4194311,5242887,6291463,7340039,3145736,4194312,5242888],"BlockIds":[3286,3286,3286,3286,3286,3286,3286,3286,3286,3286,3286,3267,3286,3286,3267,3286,3286,3286,3267,3286,3286,3286,3286,3286,3286,3286,3286,3267,3286,3286,3286,3286,3286,3286,3286,3286,3267,3286,3286,3286,3286,3286,3286,3286,3286,3267,3286,3286,3267,3286,3286,3286,3286,3286,3286,3286,3286,3286,3286,3286,3286],"DecorIndices":[],"DecorIds":[],"BlockEntities":{},"Entities":[],"ReplaceMode":2,"EntranceRotation":-1,"OriginalPos":{"X":513890,"Z":517371,"InternalY":126}};
-        let selectedBlock = null; // Track the currently glowing block
-        let originalColor = new THREE.Color();
+        const defaultData = {"GameVersion":"1.21.6","SizeX":9,"SizeY":9,"SizeZ":1,"BlockCodes":{"3286":"game:metalblock-new-plain-gold","3267":"game:metalblock-new-plain-blackbronze"},"Indices":[3145728,4194304,5242880,1048577,2097153,3145729,4194305,5242881,6291457,7340033,1048578,2097154,3145730,4194306,5242882,6291458,7340034,3,1048579,2097155,3145731,4194307,5242883,6291459,7340035,8388611,4,1048580,2097156,3145732,4194308,5242884,6291460,7340036,8388612,5,1048581,2097157,3145733,4194309,5242885,6291461,7340037,8388613,1048582,2097158,3145734,4194310,5242886,6291462,7340038,1048583,2097159,3145735,4194311,5242887,6291463,7340039,3145736,4194312,5242888],"BlockIds":[3286,3286,3286,3286,3286,3286,3286,3286,3286,3286,3286,3267,3286,3286,3267,3286,3286,3286,3267,3286,3286,3286,3286,3286,3286,3286,3286,3267,3286,3286,3286,3286,3286,3286,3286,3286,3267,3286,3286,3286,3286,3286,3286,3286,3286,3267,3286,3286,3267,3286,3286,3286,3286,3286,3286,3286,3286,3286,3286,3286,3286]};
+        let currentSchematicData = defaultData;
 
-        document.getElementById('fileInput').addEventListener('change', function (e) {
+        // UI Globals
+        window.toggleHelp = () => {
+            const panel = document.getElementById('helpPanel');
+            panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+        };
+
+        window.closeInspector = () => {
+            document.getElementById('inspector').style.display = 'none';
+            if (selectedBlock) {
+                selectedBlock.material.emissive.setHex(0x000000);
+                selectedBlock = null;
+            }
+        };
+
+        // File/Input Handlers
+        document.getElementById('fileInput').addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = (ev) => {
-                try {
-                    const data = JSON.parse(ev.target.result);
-                    render(data);
-                } catch (e) { alert("Error reading file. Standard JSON required."); }
-            };
+            reader.onload = (ev) => { render(JSON.parse(ev.target.result)); };
             reader.readAsText(file);
         });
 
-        window.addEventListener('click', (event) => {
-            if (event.target.closest('#ui') || event.target.closest('#inspector')) return;
+        const searchInput = document.getElementById('searchInput');
+        searchInput.addEventListener('input', (e) => {
+            searchQuery = e.target.value.toLowerCase();
+            updateLegendUI();
+        });
 
+        document.getElementById('clearSearch').addEventListener('click', () => {
+            searchInput.value = "";
+            searchQuery = "";
+            updateLegendUI();
+        });
+
+        document.getElementById('layerSlider').addEventListener('input', (e) => {
+            currentLayer = parseInt(e.target.value);
+            document.getElementById('layerLabel').innerText = currentLayer === -1 ? "All Floors" : `Floor Y: ${currentLayer}`;
+            applyAllFilters();
+        });
+
+        // Click to Inspect
+        window.addEventListener('click', (event) => {
+            if (event.target.closest('#ui') || event.target.closest('#inspector') || event.target.closest('#helpPanel')) return;
             mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
             raycaster.setFromCamera(mouse, camera);
-
-            // Filter out invisible blocks before checking for intersections
             const visibleBlocks = blockGroup.children.filter(obj => obj.visible);
             const intersects = raycaster.intersectObjects(visibleBlocks);
-
-            // 1. Reset previous selection's glow
-            if (selectedBlock) {
-                selectedBlock.material.emissive.setHex(0x000000); // Turn off glow
-                selectedBlock.material.emissiveIntensity = 0;
-            }
-
+            
+            if (selectedBlock) selectedBlock.material.emissive.setHex(0x000000);
+            
             if (intersects.length > 0) {
                 selectedBlock = intersects[0].object;
-
-                // 2. Make it GLOW
-                // We set the emissive color to a bright cyan/white
                 selectedBlock.material.emissive.setHex(0x00ffff);
-                selectedBlock.material.emissiveIntensity = 1.5; // High brightness
-
                 showInspector(selectedBlock.userData);
-            } else {
-                document.getElementById('inspector').style.display = 'none';
-            }
+            } else { closeInspector(); }
         });
 
         function showInspector(traits) {
             const panel = document.getElementById('inspector');
             const content = document.getElementById('traitContent');
-
-           // Check the global data for the packedIndex
-            const entityData = currentSchematicData.BlockEntities && 
-                            currentSchematicData.BlockEntities[traits.packedIndex];
-
-
+            const entityData = currentSchematicData.BlockEntities && currentSchematicData.BlockEntities[traits.packedIndex];
             panel.style.display = 'block';
             content.innerHTML = `
-            <div class="trait"><b>Code:</b><br>${traits.blockCode}</div>
-            <div class="trait"><b>Pos:</b> X:${traits.x}, Y:${traits.y}, Z:${traits.z}</div>
-            <div class="trait"><b>Packed Index:</b> ${traits.packedIndex}</div>
-            <div class="trait"><b>Block Entity:</b> ${entityData ? "✅ Yes" : "❌ No"}</div>
-        `;
-            console.log(traits);
-
-
-            if (entityData) {
-                console.log("Raw Encoded Entity Data:", entityData);
-            }
-
+                <div class="trait"><b>Code:</b><br>${traits.blockCode}</div>
+                <div class="trait"><b>Position:</b><br>X:${traits.x}, Y:${traits.y}, Z:${traits.z}</div>
+                <div class="trait"><b>Has Entity Data:</b> ${entityData ? "✅ Yes" : "❌ No"}</div>
+            `;
         }
 
         function render(data) {
             blockGroup.clear();
             blockMetadata.clear();
             currentSchematicData = data;
+            
+            const slider = document.getElementById('layerSlider');
+            slider.max = data.SizeY - 1;
+            slider.value = -1;
+            currentLayer = -1;
+            document.getElementById('layerLabel').innerText = "All Floors";
+
             const geometry = new THREE.BoxGeometry(0.92, 0.92, 0.92);
 
             data.BlockIds.forEach((id) => {
@@ -287,81 +222,59 @@
                 const z = (packedIndex >> 10) & 0x3FF;
                 const y = (packedIndex >> 20) & 0x3FF;
                 const code = data.BlockCodes[data.BlockIds[i]];
-
                 const material = new THREE.MeshLambertMaterial({ color: blockMetadata.get(code).color });
                 const cube = new THREE.Mesh(geometry, material);
                 cube.position.set(x - data.SizeX / 2, y, z - data.SizeZ / 2);
-
-                // Store traits in userData
                 cube.userData = { blockCode: code, x, y, z, packedIndex };
-
                 blockGroup.add(cube);
             });
 
             updateLegendUI();
-            camera.position.set(data.SizeX * 1.2, data.SizeY + 5, data.SizeZ * 1.2);
+            camera.position.set(data.SizeX * 1.5, data.SizeY + 10, data.SizeZ * 1.5);
             controls.target.set(0, data.SizeY / 2, 0);
             controls.update();
         }
 
-        render(currentSchematicData)
-
-        window.toggleBlock = function (code) {
-            const state = blockMetadata.get(code);
-            state.visible = !state.visible;
+        function applyAllFilters() {
             blockGroup.children.forEach(mesh => {
-                if (mesh.userData.blockCode === code) mesh.visible = state.visible;
+                const typeVisible = blockMetadata.get(mesh.userData.blockCode).visible;
+                const layerVisible = (currentLayer === -1 || mesh.userData.y === currentLayer);
+                mesh.visible = typeVisible && layerVisible;
             });
-            updateLegendUI();
-        };
-
-        window.toggleAll = function (visible) {
-            blockMetadata.forEach((val) => val.visible = visible);
-            blockGroup.children.forEach(mesh => mesh.visible = visible);
-            updateLegendUI();
-        };
+        }
 
         function updateLegendUI() {
             const container = document.getElementById('legend');
             container.innerHTML = '';
-            const sortedEntries = [...blockMetadata.entries()].sort((a, b) => b[1].count - a[1].count);
+            const sortedEntries = [...blockMetadata.entries()]
+                .filter(([code]) => code.toLowerCase().includes(searchQuery))
+                .sort((a, b) => b[1].count - a[1].count);
 
             sortedEntries.forEach(([code, data]) => {
                 const item = document.createElement('div');
                 item.className = `legend-item ${data.visible ? '' : 'hidden-block'}`;
-                item.onclick = () => toggleBlock(code);
+                item.onclick = () => {
+                    data.visible = !data.visible;
+                    applyAllFilters();
+                    updateLegendUI();
+                };
                 const cleanName = code.replace('game:', '').replace(/-/g, ' ');
                 item.innerHTML = `
-                <div class="color-box" style="background: ${data.color}"></div>
-                <div class="block-info">
-                    <div class="block-name" title="${code}">${cleanName}</div>
-                    <div class="block-count">x${data.count}</div>
-                </div>
-            `;
+                    <div class="color-box" style="background: ${data.color}"></div>
+                    <div class="block-info">
+                        <div class="block-name" title="${code}">${cleanName}</div>
+                        <div class="block-count">x${data.count}</div>
+                    </div>`;
                 container.appendChild(item);
             });
         }
 
-        function stringToColor(str) {
-            let hash = 0;
-            for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
-            return `hsl(${Math.abs(hash) % 360}, 60%, 55%)`;
-        }
+        window.toggleAll = (v) => { blockMetadata.forEach(m => m.visible = v); applyAllFilters(); updateLegendUI(); };
+        function stringToColor(str) { let h = 0; for(let i=0; i<str.length; i++) h = str.charCodeAt(i) + ((h << 5) - h); return `hsl(${Math.abs(h)%360}, 60%, 55%)`; }
+        function animate() { requestAnimationFrame(animate); if(selectedBlock) selectedBlock.material.emissiveIntensity = (Math.sin(Date.now()*0.005)+1.5)*0.5; renderer.render(scene, camera); }
 
-        function animate() {
-            requestAnimationFrame(animate);
-
-            // 3. Optional: Make the glow pulse for extra "magic"
-            if (selectedBlock) {
-                const pulse = (Math.sin(Date.now() * 0.005) + 1.5) * 0.5;
-                selectedBlock.material.emissiveIntensity = pulse;
-            }
-
-            renderer.render(scene, camera);
-        }
-
+        render(defaultData); 
         animate();
     </script>
 </body>
-
 </html>
