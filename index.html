@@ -194,6 +194,10 @@
         let raycaster = new THREE.Raycaster();
         let mouse = new THREE.Vector2();
 
+        let currentSchematicData = null;
+        let selectedBlock = null; // Track the currently glowing block
+        let originalColor = new THREE.Color();
+
         document.getElementById('fileInput').addEventListener('change', function (e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -201,14 +205,12 @@
             reader.onload = (ev) => {
                 try {
                     const data = JSON.parse(ev.target.result);
+                    currentSchematicData = data;
                     render(data);
                 } catch (e) { alert("Error reading file. Standard JSON required."); }
             };
             reader.readAsText(file);
         });
-
-        let selectedBlock = null; // Track the currently glowing block
-        let originalColor = new THREE.Color();
 
         window.addEventListener('click', (event) => {
             if (event.target.closest('#ui') || event.target.closest('#inspector')) return;
@@ -245,13 +247,25 @@
         function showInspector(traits) {
             const panel = document.getElementById('inspector');
             const content = document.getElementById('traitContent');
+
+           // Check the global data for the packedIndex
+            const entityData = currentSchematicData.BlockEntities && 
+                            currentSchematicData.BlockEntities[traits.packedIndex];
+
+
             panel.style.display = 'block';
             content.innerHTML = `
             <div class="trait"><b>Code:</b><br>${traits.blockCode}</div>
             <div class="trait"><b>Pos:</b> X:${traits.x}, Y:${traits.y}, Z:${traits.z}</div>
             <div class="trait"><b>Packed Index:</b> ${traits.packedIndex}</div>
+            <div class="trait"><b>Block Entity:</b> ${entityData ? "✅ Yes" : "❌ No"}</div>
         `;
             console.log(traits);
+
+
+            if (entityData) {
+                console.log("Raw Encoded Entity Data:", entityData);
+            }
 
         }
 
