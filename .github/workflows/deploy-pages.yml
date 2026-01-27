@@ -1,8 +1,14 @@
-name: Deploy Schematic Viewer to Pages
+name: Deploy GitHub Pages
 
 on:
   push:
-    branches: ["main"] # Runs every time you push to the main branch
+    branches:
+      - main
+    paths:
+      - 'index.html'
+      - 'icons/**'
+      - '.github/workflows/deploy-pages.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -19,13 +25,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Stage Files
+        run: |
+          mkdir -p public
+          cp index.html public/
+          cp -r icons/ public/
+
       - name: Setup Pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v5
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.' # Uploads everything in the root folder
+          path: './public'
 
       - name: Deploy to GitHub Pages
         id: deployment
