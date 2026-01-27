@@ -180,6 +180,7 @@ document.getElementById('jsonFileInput').addEventListener('change', function(e) 
             output.textContent = JSON.stringify(result, null, 4);
 
         } catch (err) {
+            console.error(err);
             status.innerHTML = `<span class="error">${err.message}</span>`;
             output.textContent = err.stack;
         }
