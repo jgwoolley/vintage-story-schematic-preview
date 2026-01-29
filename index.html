@@ -520,7 +520,12 @@
         // UI Globals
         window.toggleHelp = () => {
             const panel = document.getElementById('helpPanel');
+            window.closeInspector();
             panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+        };
+
+        window.closeHelp = () => {
+            document.getElementById('helpPanel').style.display = 'none';
         };
 
         window.closeInspector = () => {
@@ -573,6 +578,7 @@
                 selectedBlock = intersects[0].object;
                 selectedBlock.material.emissive.setHex(0x00ffff);
                 showInspector(selectedBlock.userData);
+                closeH
             } else { closeInspector(); }
         });
 
@@ -604,6 +610,8 @@
                     entityJsonHtml = `<div class="trait" style="color:#ff6b6b"><b>Error parsing data:</b><br>${err.message}</div>`;
                 }
             }
+
+            window.closeHelp();
 
             panel.style.display = 'block';
             content.innerHTML = `
