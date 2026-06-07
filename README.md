@@ -4,6 +4,12 @@ See: https://jgwoolley.github.io/vintage-story-schematic-preview/
 
 Recenter button, be able to search other schematics?
 
+## Test build
+
+```
+sh test.sh
+```
+
 ## TODO
 
 * add no ref to https://github.com/jgwoolley/vintage-story-launcher/blob/main/index.html

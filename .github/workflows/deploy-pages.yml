@@ -31,8 +31,9 @@ jobs:
 
       - name: Stage Files
         run: |
-          mkdir -p public
+          mkdir -p public/schematics
           cp *.html public/
+          cp schematics/*.json public/schematics/
           cp -r icons/ public/
 
       - name: Setup Pages
