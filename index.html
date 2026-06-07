@@ -335,7 +335,16 @@
         <button class="help-btn" onclick="toggleHelp()">Guide</button>
         <strong style="font-size: 1.2em; margin-bottom: 10px;">Schematic Inspector</strong>
 
-        <input type="file" id="fileInput" accept=".json,.hjson" style="font-size: 11px; margin-bottom: 15px;">
+        <input type="file" id="fileInput" accept=".json" style="font-size: 11px; margin-bottom: 15px;">
+        <select id="fileSelect">
+            <option value="" selected hidden>-- Select a template --</option>
+            <option value="./schematics/default.json">Default Schematic</option>
+            <optgroup label="Astral Sorcery">
+                <option value="./schematics/ancient_shrine.json">Ancient Shrine</option>
+                <option value="./schematics/desert_shrine.json">Desert Shrine</option>
+                <option value="./schematics/small_shrine.json">Small Shrine</option>
+            </optgroup>
+        </select>
         <div id="schematicInfo">Size: <span id="sizeValue">-</span></div>
         <div class="control-block">
             <div style="display:flex; justify-content: space-between; font-size: 12px;">
@@ -779,6 +788,20 @@
 
         render(defaultData);
         animate();
+
+        const fileSelectElement = document.getElementById('fileSelect');
+            if(fileSelectElement) {
+                fileSelectElement.addEventListener('change', async (event) => {
+                    if (!event.target.value) {
+                        return;
+                    }
+                    // FIXED: Await the fetch, then await the JSON parsing
+                    const response = await fetch(event.target.value);
+                    const data = await response.json();
+                    render(data);
+                });
+                    
+        }
     </script>
 </body>
 

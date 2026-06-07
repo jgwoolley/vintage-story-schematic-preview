@@ -9,6 +9,9 @@ Recenter button, be able to search other schematics?
 * add no ref to https://github.com/jgwoolley/vintage-story-launcher/blob/main/index.html
 * Add build step... to both projects.
 * Maybe consistancy?
+* Rework selecting built in schematics
+* Rework naming
+* potentially make a build system?
 
 ###
 
